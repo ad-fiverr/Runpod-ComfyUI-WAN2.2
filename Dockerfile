@@ -62,10 +62,10 @@ RUN cd /ComfyUI/custom_nodes && \
     git clone --depth=1 https://github.com/numz/ComfyUI-SeedVR2_VideoUpscaler.git && \
     git clone --depth=1 https://github.com/kijai/ComfyUI-KJNodes.git && \
     git clone --depth=1 https://github.com/yolain/ComfyUI-Easy-Use.git && \
-    git clone --depth=1 https://github.com/IAMCCS/ComfyUI-IAMCCS-nodes.git && \
+    git clone --depth=1 https://github.com/IAMCCS/IAMCCS-nodes.git && \
     git clone --depth=1 https://github.com/ClownsharkBatwing/RES4LYF.git
  
-RUN for dir in rgthree-comfy ComfyUI-Impact-Pack ComfyUI_essentials ComfyUI-GGUF ComfyUI-Impact-Subpack cg-use-everywhere ComfyMath ComfyUI-Custom-Scripts ComfyUI-mxToolkit comfyui-crystools ComfyUI_LayerStyle ComfyUI_Fill-Nodes ComfyUI-Image-Saver ComfyUI-AdvancedLivePortrait ComfyUI-WanVideoWrapper Vantage-Nodes ComfyUI-Gemini ComfyUI-LTXVideo LanPaint ComfyUI_Comfyroll_CustomNodes ComfyUI_Eclipse ComfyUI-Pixaroma CRT-Nodes ComfyUI-CRZnodes ComfyUI-RBG-SmartSeedVariance ComfyUI_SaveImageWithMetaDataUniversal ComfyUI-DaSiWa-Nodes ComfyUI-SeedVR2_VideoUpscaler ComfyUI-QwenImageWanBridge ComfyUI-KJNodes ComfyUI-Easy-Use ComfyUI-IAMCCS-nodes RES4LYF; do \
+RUN for dir in rgthree-comfy ComfyUI-Impact-Pack ComfyUI_essentials ComfyUI-GGUF ComfyUI-Impact-Subpack cg-use-everywhere ComfyMath ComfyUI-Custom-Scripts ComfyUI-mxToolkit comfyui-crystools ComfyUI_LayerStyle ComfyUI_Fill-Nodes ComfyUI-Image-Saver ComfyUI-AdvancedLivePortrait ComfyUI-WanVideoWrapper Vantage-Nodes ComfyUI-Gemini ComfyUI-LTXVideo LanPaint ComfyUI_Comfyroll_CustomNodes ComfyUI_Eclipse ComfyUI-Pixaroma CRT-Nodes ComfyUI-CRZnodes ComfyUI-RBG-SmartSeedVariance ComfyUI_SaveImageWithMetaDataUniversal ComfyUI-DaSiWa-Nodes ComfyUI-SeedVR2_VideoUpscaler ComfyUI-QwenImageWanBridge ComfyUI-KJNodes ComfyUI-Easy-Use IAMCCS-nodes RES4LYF; do \
       REQ="/ComfyUI/custom_nodes/${dir}/requirements.txt"; \
       if [ -f "$REQ" ]; then pip install -q -r "$REQ"; fi; \
     done
