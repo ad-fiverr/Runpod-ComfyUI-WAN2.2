@@ -28,7 +28,8 @@ RUN pip install --no-cache-dir -r /ComfyUI/requirements.txt
 RUN echo "kornia==0.6.12" > /etc/pip-constraints.txt
 ENV PIP_CONSTRAINT=/etc/pip-constraints.txt
 
-# --- Custom Nodes (misma lista que ya usabas) ---
+
+# --- Custom Nodes ---
 RUN cd /ComfyUI/custom_nodes && \
     git clone --depth=1 https://github.com/rgthree/rgthree-comfy.git && \
     git clone --depth=1 https://github.com/ltdrdata/ComfyUI-Impact-Pack.git && \
@@ -58,16 +59,19 @@ RUN cd /ComfyUI/custom_nodes && \
     git clone --depth=1 https://github.com/xxmjskxx/ComfyUI_SaveImageWithMetaDataUniversal.git && \
     git clone --depth=1 https://github.com/darksidewalker/ComfyUI-DaSiWa-Nodes.git && \
     git clone --depth=1 https://github.com/fblissjr/ComfyUI-QwenImageWanBridge.git && \
-    git clone --depth=1 https://github.com/numz/ComfyUI-SeedVR2_VideoUpscaler.git
-
-
-RUN for dir in rgthree-comfy ComfyUI-Impact-Pack ComfyUI_essentials ComfyUI-GGUF ComfyUI-Impact-Subpack cg-use-everywhere ComfyMath ComfyUI-Custom-Scripts ComfyUI-mxToolkit comfyui-crystools ComfyUI_LayerStyle ComfyUI_Fill-Nodes ComfyUI-Image-Saver ComfyUI-AdvancedLivePortrait ComfyUI-WanVideoWrapper Vantage-Nodes ComfyUI-Gemini ComfyUI-LTXVideo LanPaint ComfyUI_Comfyroll_CustomNodes ComfyUI_Eclipse ComfyUI-Pixaroma CRT-Nodes ComfyUI-CRZnodes ComfyUI-RBG-SmartSeedVariance ComfyUI_SaveImageWithMetaDataUniversal ComfyUI-DaSiWa-Nodes ComfyUI-SeedVR2_VideoUpscaler ComfyUI-QwenImageWanBridge; do \
+    git clone --depth=1 https://github.com/numz/ComfyUI-SeedVR2_VideoUpscaler.git && \
+    git clone --depth=1 https://github.com/kijai/ComfyUI-KJNodes.git && \
+    git clone --depth=1 https://github.com/yolain/ComfyUI-Easy-Use.git && \
+    git clone --depth=1 https://github.com/IAMCCS/ComfyUI-IAMCCS-nodes.git && \
+    git clone --depth=1 https://github.com/ClownsharkBatwing/RES4LYF.git
+ 
+RUN for dir in rgthree-comfy ComfyUI-Impact-Pack ComfyUI_essentials ComfyUI-GGUF ComfyUI-Impact-Subpack cg-use-everywhere ComfyMath ComfyUI-Custom-Scripts ComfyUI-mxToolkit comfyui-crystools ComfyUI_LayerStyle ComfyUI_Fill-Nodes ComfyUI-Image-Saver ComfyUI-AdvancedLivePortrait ComfyUI-WanVideoWrapper Vantage-Nodes ComfyUI-Gemini ComfyUI-LTXVideo LanPaint ComfyUI_Comfyroll_CustomNodes ComfyUI_Eclipse ComfyUI-Pixaroma CRT-Nodes ComfyUI-CRZnodes ComfyUI-RBG-SmartSeedVariance ComfyUI_SaveImageWithMetaDataUniversal ComfyUI-DaSiWa-Nodes ComfyUI-SeedVR2_VideoUpscaler ComfyUI-QwenImageWanBridge ComfyUI-KJNodes ComfyUI-Easy-Use ComfyUI-IAMCCS-nodes RES4LYF; do \
       REQ="/ComfyUI/custom_nodes/${dir}/requirements.txt"; \
       if [ -f "$REQ" ]; then pip install -q -r "$REQ"; fi; \
     done
 
 
-
+RUN cd /ComfyUI/custom_nodes/ComfyUI-Impact-Pack && python3 install.py || true    
 RUN rm -rf /ComfyUI/custom_nodes/ComfyUI-Login /ComfyUI/custom_nodes/ComfyUI-login
 
 # --- Workflows ---
