@@ -33,13 +33,6 @@ HF_TOKEN="${HF_TOKEN}"
 HF_TOKEN_loras="${HF_TOKEN_loras}"
 COMFYUI_DIR="/workspace/ComfyUI"
 
- 
-# Cola global de descargas: en vez de lanzar aria2c una vez por archivo
-# (secuencial, 4 conexiones nada más), acumulamos todo aquí y lo disparamos
-# con UN solo aria2c -j (varios archivos en paralelo, cada uno multi-conexión).
-ARIA_QUEUE="/tmp/aria2_queue.txt"
-> "$ARIA_QUEUE"
-
 
 echo "================================================"
 echo "  ComfyUI Model Setup — ALL IN ONE Edition"
@@ -73,28 +66,52 @@ mkdir -p ${COMFYUI_DIR}/models/loras \
 
 download_if_missing() {
     local url="$1" dest="$2" auth="$3"
- 
+    
     # Si el archivo ya existe y tiene contenido, salta la descarga
-    if [ -f "$dest" ] && [ -s "$dest" ]; then return 0; fi
- 
-    echo "  Encolado: $(basename "$dest")"
- 
-    local dest_dir
-    dest_dir=$(dirname "$dest")
-    local file_name
-    file_name=$(basename "$dest")
- 
+    if [ -f "$dest" ] && [ -s "$dest" ]; then 
+        echo "✅ Ya existe: $(basename "$dest")"
+        return 0
+    fi
+    
+    local dest_dir=$(dirname "$dest")
+    local file_name=$(basename "$dest")
+    
+    echo "⬇️ Descargando: $file_name"
+    
+    # Crea el directorio si no existe (por seguridad)
     mkdir -p "$dest_dir"
-    # Resolvemos a ruta absoluta AHORA (el cd actual puede cambiar luego)
-    local abs_dir
-    abs_dir=$(cd "$dest_dir" && pwd)
- 
-    {
-        echo "$url"
-        echo "  dir=$abs_dir"
-        echo "  out=$file_name"
-        [ -n "$auth" ] && echo "  header=Authorization: Bearer $auth"
-    } >> "$ARIA_QUEUE"
+    
+    # Opciones comunes para optimizar la velocidad y estabilidad en aria2c
+    local aria2_opts=(
+            "-x" "16"                  # Máximo de conexiones por servidor permitidas
+            "-s" "16"                  # Máximo de particiones
+            "-k" "50M"                 # Ideal para archivos masivos, divide en trozos más grandes
+            "--disk-cache=256M"        # USA TU RAM: Mantiene las descargas en memoria antes de escribirlas al disco (crucial para 1 Gbps)
+            "--file-allocation=falloc" # Reserva los 20GB instantáneamente en el disco en lugar de hacerlo poco a poco
+            "-c"                       # Continuar descargas interrumpidas
+            "--max-tries=5"            
+            "--retry-wait=3"           
+            "--timeout=60"             
+            "--console-log-level=warn" 
+            "--summary-interval=5"     
+            "-d" "$dest_dir" 
+            "-o" "$file_name"
+    )
+    
+    # Ejecuta aria2c usando array para evitar problemas de comillas/espacios
+    if [ -n "$auth" ]; then
+        aria2c --header="Authorization: Bearer $auth" "${aria2_opts[@]}" "$url"
+    else
+        aria2c "${aria2_opts[@]}" "$url"
+    fi
+
+    # Manejo de errores: verifica que aria2c terminó exitosamente (código 0)
+    if [ $? -eq 0 ]; then
+        echo "✅ Descarga completada: $file_name"
+    else
+        echo "❌ Error al descargar: $file_name"
+        return 1
+    fi
 }
 
 download_gdown_if_missing() {
@@ -122,33 +139,69 @@ download_gdown_if_missing() {
         gdown "$id" -O "$dest"
     fi
 }
- 
+
 download_hf_repo() {
     local repo="$1" dest_dir="$2"
     echo "  Descargando repo HF: $repo en $dest_dir"
     HF_TOKEN=${HF_TOKEN} huggingface-cli download "$repo" --local-dir "$dest_dir" --local-dir-use-symlinks False
 }
- 
+
 download_hf_repo_aria2c() {
     local repo="$1" dest_dir="$2" auth="$3"
- 
-    echo "  Listando archivos de: $repo"
+
+    # 1. Autoinstalación de 'jq' si no existe
+    if ! command -v jq &> /dev/null; then
+        echo "⚙️ 'jq' no encontrado. Instalando automáticamente..."
+        
+        # Evita que apt pida confirmaciones o menús interactivos que congelen el script
+        export DEBIAN_FRONTEND=noninteractive 
+        
+        # Actualiza las listas e instala jq de forma silenciosa
+        apt-get update -qq && apt-get install -y jq > /dev/null 2>&1
+        
+        # Verifica si la instalación fue exitosa
+        if ! command -v jq &> /dev/null; then
+            echo "❌ No se pudo instalar 'jq' automáticamente. Abortando."
+            return 1
+        fi
+        echo "✅ 'jq' instalado correctamente."
+    fi
+
+    echo "🔍 Listando archivos del repositorio: $repo"
+    
+    # 2. Manejo dinámico del token de seguridad
+    local curl_cmd=(curl -s -f)
+    if [ -n "$auth" ]; then
+        curl_cmd+=(-H "Authorization: Bearer $auth")
+    fi
+
+    # 3. Consulta a la API
     local files
-    files=$(curl -s -H "Authorization: Bearer $auth" \
-        "https://huggingface.co/api/models/$repo" | jq -r '.siblings[].rfilename')
- 
-    if [ -z "$files" ]; then
-        echo "  No se encontraron archivos (revisa el nombre del repo o el token)"
+    files=$("${curl_cmd[@]}" "https://huggingface.co/api/models/$repo" | jq -r '.siblings[].rfilename 2>/dev/null')
+
+    # 4. Validación estricta de errores
+    if [ $? -ne 0 ] || [ -z "$files" ] || [ "$files" = "null" ]; then
+        echo "❌ No se encontraron archivos o acceso denegado (Revisa el nombre del repo y tu token HF)."
         return 1
     fi
- 
+
+    echo "📦 Archivos encontrados. Iniciando descarga por lotes..."
+
+    # 5. Bucle de descarga
     while IFS= read -r file; do
+        [ -z "$file" ] && continue
+        
         local url="https://huggingface.co/$repo/resolve/main/$file"
         local dest="$dest_dir/$file"
+        
         download_if_missing "$url" "$dest" "$auth"
+        
     done <<< "$files"
+    
+    echo "✅ Repositorio procesado completamente: $repo"
 }
- 
+
+
 
 echo "Instalando huggingface_hub..."
 pip install -U huggingface_hub
@@ -256,7 +309,7 @@ download_if_missing "https://huggingface.co/24xx/segm/resolve/main/skin_yolov8n-
 
 
 # ── SECCIÓN DE DESCARGAS MODELOS DE IMAGEN ─────────────────────────
-
+(
 # --- DIFFUSION MODELS ---
 echo "[ ------- Downloading Diffusion Models -------]"
 cd ${COMFYUI_DIR}/models/diffusion_models && rm -rf split_files/
@@ -354,8 +407,6 @@ megadl 'https://mega.nz/folder/Xc4wnC7T#yUS5-9-AbRxLhpdPW_8f2w'
 
 
 
-
-
 # --- LUTS ---
 # ── Luts  ──────────────────────────────────────────────────────────
 echo "[ VAE ]"
@@ -373,12 +424,7 @@ download_if_missing "https://huggingface.co/numz/SeedVR2_comfyUI/resolve/main/se
     "seedvr2_ema_7b_sharp_fp16.safetensors" "$HF_TOKEN"
 
 
-
-# Todo lo anterior (video + imagen) solo llenó la cola, sin bajar nada
-# todavía. Ahora la disparamos entera de una vez en segundo plano, así
-# ComfyUI puede arrancar de inmediato mientras la descarga real ocurre
-# con máximo paralelismo detrás.
-flush_downloads &
+) &
 
 
 cd ${COMFYUI_DIR}
