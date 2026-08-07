@@ -2,11 +2,15 @@ FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
+ENV LIBGL_ALWAYS_SOFTWARE=1
 
 RUN apt-get update -qq && apt-get install -y -qq \
     git wget curl dos2unix aria2 megatools \
     python3.11 python3.11-venv python3.11-distutils \
-     libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 \
+    libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 \
+    fonts-dejavu-core fontconfig \
+    libegl1 libglx-mesa0 libglu1-mesa libgles2 libosmesa6 mesa-utils \
+    && fc-cache -f \
     && rm -rf /var/lib/apt/lists/*
 
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
@@ -20,6 +24,13 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
 # Si más adelante RunPod resuelve el soporte de Blackwell, prueba cambiar a cu130.
 RUN pip install --no-cache-dir torch torchvision torchaudio \
     --index-url https://download.pytorch.org/whl/cu128
+
+
+# --- SageAttention: requiere compilar contra el torch/CUDA ya instalados arriba ---
+# Necesita nvcc (por eso la imagen base es -devel, no -runtime) y puede tardar varios minutos en compilar.
+RUN pip install --no-cache-dir triton
+RUN pip install --no-cache-dir sageattention
+
 
 # --- Clonar ComfyUI directamente desde el repo oficial ---
 RUN git clone --depth=1 https://github.com/comfyanonymous/ComfyUI.git /ComfyUI

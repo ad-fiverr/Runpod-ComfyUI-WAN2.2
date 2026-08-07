@@ -447,4 +447,4 @@ echo "================================================"
 
 chmod -R 777 /workspace/ComfyUI
 
-exec python /workspace/ComfyUI/main.py --listen 0.0.0.0 --port 8188 --enable-manager --highvram --fast
+exec python /workspace/ComfyUI/main.py --listen 0.0.0.0 --port 8188 --enable-manager  --fast
