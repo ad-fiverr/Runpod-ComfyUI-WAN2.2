@@ -255,10 +255,11 @@ python3 -c "from huggingface_hub import login; login(token='$HF_TOKEN')"
 
 echo "[ ------- Downloading Diffusion Models -------]"
 cd ${COMFYUI_DIR}/models/diffusion_models && rm -rf split_files/
-download_if_missing "https://civitai.red/api/download/models/2953474?type=Model&format=SafeTensor&token=e3a803e3831ec4832fd75d014b2d385e" \
-    "DasiwaWAN22I2V14BLightspeed_snatchkissHighV11.safetensors" 
-download_if_missing "https://civitai.red/api/download/models/2953485?type=Model&format=SafeTensor&token=e3a803e3831ec4832fd75d014b2d385e" \
-    "DasiwaWAN22I2V14BLightspeed_snatchkissLowV11.safetensors" 
+download_if_missing "https://huggingface.co/exjadev/diffusion_models/resolve/main/DasiwaWAN22I2V14BLightspeed_snatchkissHighV11.safetensors" \
+    "DasiwaWAN22I2V14BLightspeed_snatchkissHighV11.safetensors" "$HF_TOKEN"
+
+download_if_missing "https://huggingface.co/exjadev/diffusion_models/resolve/main/DasiwaWAN22I2V14BLightspeed_snatchkissLowV11.safetensors" \
+    "DasiwaWAN22I2V14BLightspeed_snatchkissLowV11.safetensors" "$HF_TOKEN"
 
 
 
@@ -272,10 +273,10 @@ download_if_missing "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged
 # ------------------------------ LORAS ---
 echo "[ LoRAs ]"
 cd ${COMFYUI_DIR}/models/loras && rm -rf split_files/
-download_if_missing "https://civitai.red/api/download/models/2553271?type=Model&format=SafeTensor&token=e3a803e3831ec4832fd75d014b2d385e" \
-    "DR34ML4Y_I2V_14B_LOW_V2.safetensors"
-download_if_missing "https://civitai.red/api/download/models/2553151?type=Model&format=SafeTensor&token=e3a803e3831ec4832fd75d014b2d385e" \
-    "DR34ML4Y_I2V_14B_HIGH_V2.safetensors" 
+download_if_missing "https://huggingface.co/Serenak/chilloutmix/resolve/main/DR34ML4Y_I2V_14B_LOW_V2.safetensors" \
+    "DR34ML4Y_I2V_14B_LOW_V2.safetensors" "$HF_TOKEN"
+download_if_missing "https://huggingface.co/Serenak/chilloutmix/resolve/main/DR34ML4Y_I2V_14B_HIGH_V2.safetensors" \
+    "DR34ML4Y_I2V_14B_HIGH_V2.safetensors" "$HF_TOKEN"
 
 echo "[ Character LoRas ]"
 cd ${COMFYUI_DIR}/models/loras && rm -rf split_files/
@@ -349,12 +350,12 @@ download_if_missing "https://huggingface.co/24xx/segm/resolve/main/skin_yolov8n-
 
 
 # ── SECCIÓN DE DESCARGAS MODELOS DE IMAGEN ─────────────────────────
-(
 # --- DIFFUSION MODELS ---
 echo "[ ------- Downloading Diffusion Models -------]"
 cd ${COMFYUI_DIR}/models/diffusion_models && rm -rf split_files/
-download_if_missing "https://civitai.red/api/download/models/3145550?fileId=3026008&token=e3a803e3831ec4832fd75d014b2d385e" \
-    "krast_v20.safetensors" 
+
+download_if_missing "https://huggingface.co/exjadev/diffusion_models/resolve/main/krast_v20.safetensors" \
+    "krast_v20.safetensors" "$HF_TOKEN"
 
 cd ${COMFYUI_DIR}/models/diffusion_models 
 download_if_missing "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/diffusion_models/z_image_turbo_bf16.safetensors" \
@@ -384,6 +385,7 @@ download_if_missing "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main
 download_if_missing "https://huggingface.co/Comfy-Org/flux2-dev/resolve/main/split_files/vae/flux2-vae.safetensors" \
     "flux2-vae.safetensors" "$HF_TOKEN"
 
+(
 # ------------------------------ LORAS ---
 echo "[ LoRAs ]"
 cd ${COMFYUI_DIR}/models/loras && rm -rf recipes/
@@ -445,8 +447,6 @@ cd ${COMFYUI_DIR}/models/upscale_models/
 megadl 'https://mega.nz/folder/Xc4wnC7T#yUS5-9-AbRxLhpdPW_8f2w'
 
 
-
-
 # --- LUTS ---
 # ── Luts  ──────────────────────────────────────────────────────────
 echo "[ VAE ]"
@@ -456,13 +456,10 @@ echo "[ ----------Downloading LUTs --------------]"
 download_gdown_if_missing "1GJEhRrycKwMINkgicw_GjQbjuwdqRJ9P" "LUTs" "folder"
 
 
-
-    # ── SEEDVR2 (Upscale Models) ──────────────────────────────────────────
-echo "[ Starting download SEEDV2 ]"
-cd ${COMFYUI_DIR}/models/SEEDVR2
-download_if_missing "https://huggingface.co/numz/SeedVR2_comfyUI/resolve/main/seedvr2_ema_7b_sharp_fp16.safetensors" \
-    "seedvr2_ema_7b_sharp_fp16.safetensors" "$HF_TOKEN"
-
+echo "[ ------- Downloading Diffusion Models -------]"
+cd ${COMFYUI_DIR}/models/diffusion_models && rm -rf split_files/
+download_if_missing "https://huggingface.co/exjadev/diffusion_models/resolve/main/krastBf16_v3.safetensors" \
+"krastBf16_v3.safetensors" "$HF_TOKEN"
 
 ) &
 
