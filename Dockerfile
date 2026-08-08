@@ -29,7 +29,10 @@ RUN pip install --no-cache-dir torch torchvision torchaudio \
 # --- SageAttention: requiere compilar contra el torch/CUDA ya instalados arriba ---
 # Necesita nvcc (por eso la imagen base es -devel, no -runtime) y puede tardar varios minutos en compilar.
 RUN pip install --no-cache-dir triton
-RUN pip install --no-cache-dir sageattention
+RUN pip install --no-cache-dir ninja
+ENV TORCH_CUDA_ARCH_LIST="12.0"
+ENV MAX_JOBS=2
+RUN pip install --no-cache-dir sageattention==2.2.0 --no-build-isolation
 
 
 # --- Clonar ComfyUI directamente desde el repo oficial ---
