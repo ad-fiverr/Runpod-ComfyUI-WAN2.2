@@ -32,8 +32,10 @@ RUN pip install --no-cache-dir triton
 RUN pip install --no-cache-dir ninja
 ENV TORCH_CUDA_ARCH_LIST="12.0"
 ENV MAX_JOBS=2
-RUN pip install --no-cache-dir sageattention==2.2.0 --no-build-isolation
-
+RUN git clone https://github.com/thu-ml/SageAttention.git /tmp/SageAttention \
+    && cd /tmp/SageAttention \
+    && EXT_PARALLEL=1 NVCC_APPEND_FLAGS="--threads 2" python setup.py install \
+    && rm -rf /tmp/SageAttention
 
 # --- Clonar ComfyUI directamente desde el repo oficial ---
 RUN git clone --depth=1 https://github.com/comfyanonymous/ComfyUI.git /ComfyUI
