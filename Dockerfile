@@ -22,15 +22,17 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
 # --- PyTorch: versión explícita, controlada por ti (no heredada de un tercero) ---
 # cu128 confirmado funcional en tus pruebas con 3090 Ti y 4090.
 # Si más adelante RunPod resuelve el soporte de Blackwell, prueba cambiar a cu130.
-RUN pip install --no-cache-dir torch torchvision torchaudio \
+RUN pip install --no-cache-dir \
+    torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 \
     --index-url https://download.pytorch.org/whl/cu128
 
 
 # --- SageAttention: requiere compilar contra el torch/CUDA ya instalados arriba ---
 # Necesita nvcc (por eso la imagen base es -devel, no -runtime) y puede tardar varios minutos en compilar.
-RUN pip install --no-cache-dir triton
+RUN pip install --no-cache-dir triton==3.5.1
 RUN pip install --no-cache-dir ninja
-ENV TORCH_CUDA_ARCH_LIST="12.0"
+# Soporta 4090 (Ada, 8.9) Y Blackwell (12.0) en el mismo build
+ENV TORCH_CUDA_ARCH_LIST="8.9;12.0"
 ENV MAX_JOBS=2
 RUN git clone https://github.com/thu-ml/SageAttention.git /tmp/SageAttention \
     && cd /tmp/SageAttention \
