@@ -33,6 +33,14 @@ HF_TOKEN="${HF_TOKEN}"
 HF_TOKEN_loras="${HF_TOKEN_loras}"
 COMFYUI_DIR="/workspace/ComfyUI"
 
+ 
+# Fuerza los directorios temporales de descarga al volumen de 250GB (/workspace)
+# en vez del disco del contenedor (15GB), que se llena con archivos grandes
+# (ej. qwen_3_8b.safetensors ~16GB no cabe ni queda espacio en un disco de 15GB).
+export TMPDIR="/workspace/tmp"
+mkdir -p "$TMPDIR"
+ 
+
 
 echo "================================================"
 echo "  ComfyUI Model Setup — ALL IN ONE Edition"
