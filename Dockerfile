@@ -102,7 +102,9 @@ COPY Klein-Inpainting-workflow.json /ComfyUI/user/default/workflows/Klein-Inpain
 COPY Krea-I2I-workflow.json /ComfyUI/user/default/workflows/Krea-I2I-workflow.json
 COPY Zimage-upscaler-workflow.json /ComfyUI/user/default/workflows/Zimage-upscaler-workflow.json
 
-RUN pip install --no-cache-dir gdown huggingface_hub comfyui-manager
+RUN pip install --no-cache-dir gdown  comfyui-manager
+RUN pip install --no-cache-dir -U "huggingface_hub[hf_xet]"
+
 
 ARG HF_TOKEN
 ENV HF_TOKEN=${HF_TOKEN}

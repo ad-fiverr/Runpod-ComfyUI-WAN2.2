@@ -65,7 +65,7 @@ mkdir -p ${COMFYUI_DIR}/models/loras \
 # ── Funciones de descarga ─────────────────────────────────────────────────────
 
 download_if_missing() {
-    local url="$1" dest="$2" auth="$3"
+    local url="$1" dest="$2" auth="$3" conns="${4:-16}"
     
     # Si el archivo ya existe y tiene contenido, salta la descarga
     if [ -f "$dest" ] && [ -s "$dest" ]; then 
@@ -76,21 +76,60 @@ download_if_missing() {
     local dest_dir=$(dirname "$dest")
     local file_name=$(basename "$dest")
     
-    echo "⬇️ Descargando: $file_name"
-    
-    # Crea el directorio si no existe (por seguridad)
     mkdir -p "$dest_dir"
     
+    # ── Ruta rápida: HuggingFace usa `hf download` (Xet) — hasta ~4x más rápido
+    # y sin los "Download aborted" que da aria2c en repos con muchas conexiones.
+    if [[ "$url" == *"huggingface.co"* ]]; then
+        echo "⬇️ Descargando (HF/Xet): $file_name"
+
+        local repo_type=""
+        local path_part="${url#*huggingface.co/}"
+        path_part="${path_part%%\?*}"   # quita query string si la hay
+
+        if [[ "$path_part" == datasets/* ]]; then
+            repo_type="dataset"
+            path_part="${path_part#datasets/}"
+        fi
+
+        # path_part: owner/repo/resolve/REVISION/ruta/dentro/del/repo/archivo.ext
+        local repo=$(echo "$path_part" | cut -d/ -f1-2)
+        local file_in_repo=$(echo "$path_part" | cut -d/ -f5-)   # se salta owner/repo/resolve/REVISION
+
+        local tmp_dir=$(mktemp -d)
+        local hf_opts=(download "$repo" "$file_in_repo" --local-dir "$tmp_dir")
+        [ -n "$repo_type" ] && hf_opts+=(--repo-type "$repo_type")
+        [ -n "$auth" ] && hf_opts+=(--token "$auth")
+
+        HF_XET_HIGH_PERFORMANCE=1 hf "${hf_opts[@]}"
+        local status=$?
+
+        if [ $status -eq 0 ] && [ -f "$tmp_dir/$file_in_repo" ]; then
+            mv "$tmp_dir/$file_in_repo" "$dest"
+            rm -rf "$tmp_dir"
+            echo "✅ Descarga completada: $file_name"
+            return 0
+        else
+            rm -rf "$tmp_dir"
+            echo "⚠️  hf download falló, reintentando con aria2c: $file_name"
+            # cae al bloque de aria2c de abajo
+        fi
+    fi
+
+    echo "⬇️ Descargando (aria2c): $file_name (conexiones: $conns)"
+
     # Opciones comunes para optimizar la velocidad y estabilidad en aria2c
+    # $conns controla -x/-s: bájalo (ej. 4) para hosts que limitan conexiones
+    # concurrentes por archivo (verás "Download aborted" repetido si es el caso)
     local aria2_opts=(
-            "-x" "16"                  # Máximo de conexiones por servidor permitidas
-            "-s" "16"                  # Máximo de particiones
+            "-x" "$conns"              # Máximo de conexiones por servidor permitidas
+            "-s" "$conns"              # Máximo de particiones
             "-k" "50M"                 # Ideal para archivos masivos, divide en trozos más grandes
             "--disk-cache=256M"        # USA TU RAM: Mantiene las descargas en memoria antes de escribirlas al disco (crucial para 1 Gbps)
             "--file-allocation=falloc" # Reserva los 20GB instantáneamente en el disco en lugar de hacerlo poco a poco
             "-c"                       # Continuar descargas interrumpidas
-            "--max-tries=5"            
-            "--retry-wait=3"           
+            "--max-tries=8"            
+            "--retry-wait=5"           
             "--timeout=60"             
             "--console-log-level=warn" 
             "--summary-interval=5"     
@@ -113,6 +152,7 @@ download_if_missing() {
         return 1
     fi
 }
+
 
 download_gdown_if_missing() {
     local id="$1" dest="$2" type="$3"
