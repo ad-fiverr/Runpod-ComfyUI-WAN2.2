@@ -6,7 +6,7 @@ ENV LIBGL_ALWAYS_SOFTWARE=1
 
 RUN apt-get update -qq && apt-get install -y -qq \
     git wget curl dos2unix aria2 megatools \
-    python3.11 python3.11-venv python3.11-distutils \
+    python3.11 python3.11-venv python3.11-distutils python3.11-dev  \
     libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 \
     fonts-dejavu-core fontconfig \
     libegl1 libglx-mesa0 libglu1-mesa libgles2 libosmesa6 mesa-utils \
